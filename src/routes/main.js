@@ -39,10 +39,6 @@ routes.get('/forget_password', async (req, res) => {
     res.render('forget_password');
 });
 
-// routes.get('/home', async (req, res) => {
-//     // console.log("home page rendered!");
-//     res.render('home');
-// });
 
 routes.get('/reset_password', async (req, res) => {
     // console.log("reset_password page rendered!");
