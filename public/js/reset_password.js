@@ -71,12 +71,13 @@ document.getElementById("confirm_btn").addEventListener("click", () => {
             .then(data => {
                 console.log(data.message, data.reset_success, data.null_otp);
                 if (data.reset_success) {
+                    localStorage.removeItem("f_email");
+                    localStorage.removeItem("f_otp");
+
                     alert("Reset password successfully, now you can login with new password");
-                    // setTimeout(function () {
-                    //     document.getElementById("header").innerHTML = "Reset password successfully, now you can login with new password";
-                    // }, 3000);
+                    
                     action = "/";
-                    document.getElementById("reset_pass_form").action = action;//`http://localhost:5566/${element.value}`;
+                    document.getElementById("reset_pass_form").action = action;
                     document.getElementById("reset_pass_form").submit();
                 }
                 if(data.null_otp){

@@ -3,3 +3,10 @@
 .vscode/
 node_modules/
 /src/test.js
+views/home1(bootstrap).html
+views/home(old).hbs
+views/home1.html
+views/catagory(bootstrap).html
+views/catagory(bootstrap)1.html
+views/transaction(bootstrap).html
+views/contactus.html

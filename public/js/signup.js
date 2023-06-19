@@ -100,12 +100,13 @@ function validate_Form() {
                 console.log(data.success, true);
                 if (data.success) {
                     // Store in local Storage
-                    localStorage.setItem("expanse_name", `${data.name}`);
-                    localStorage.setItem("expanse_email", `${data.email}`);
-                    localStorage.setItem("expanse_password", `${data.password}`);
+                    localStorage.setItem("expense_name", `${data.name}`);
+                    localStorage.setItem("expense_email", `${data.email}`);
+                    localStorage.setItem("expense_password", `${data.password}`);
 
                     action = "/home";
-                    document.getElementById("signupForm").action = action;//`http://localhost:5566/${element.value}`;
+                    localStorage.setItem('nav_active', "home");
+                    document.getElementById("signupForm").action = action;
                     document.getElementById("signupForm").submit();
                     for_return = true;
                 } else {

@@ -1,11 +1,13 @@
 const express = require("express");
 const bodyparser = require("body-parser");
+const session = require('express-session');
+const cookieParser = require('cookie-parser');
 var jsonparser = bodyparser.json();
 
 const routes = express.Router();
 
 // MongoDB Database Configuration
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 const client = new MongoClient(process.env.URL);
 
 // Email Configuration
@@ -25,29 +27,14 @@ const transporter = nodemailer.createTransport({
 });
 
 
+// Load login page at start
 routes.get("/", async (req, res) => {
     res.render("login");
 });
 
-routes.get('/signup', async (req, res) => {
-    // console.log("signup page rendered!");
-    res.render('signup');
-});
-
-routes.get('/forget_password', async (req, res) => {
-    // console.log("forget_password page rendered!");
-    res.render('forget_password');
-});
-
-
-routes.get('/reset_password', async (req, res) => {
-    // console.log("reset_password page rendered!");
-    res.render('reset_password');
-});
-
 routes.post('/login_check', jsonparser, async (req, res) => {
     // console.log(req.body.msg);
-    var login_success = false;
+    let login_success = false;
     success_data = {
         name: null,
         email: null,
@@ -58,13 +45,17 @@ routes.post('/login_check', jsonparser, async (req, res) => {
     try {
         await client.connect();
         if (req.body.email) {
-            item = await client.db("Auth").collection("Email_Password").findOne({ _id: req.body.email });
+            const item = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).findOne({ _id: req.body.email });
             // console.log(item);
             if (req.body.password === item.password) {
                 login_success = true;
                 success_data.email = item._id;
                 success_data.password = item.password;
                 success_data.name = item.name;
+
+                req.session.email = item._id;
+                req.session.name = item.name;
+                req.session.password = item.password;
                 // console.log("login_success :", login_success);
             }
         }
@@ -84,9 +75,16 @@ routes.post('/login_check', jsonparser, async (req, res) => {
     res.send(data);
 });
 
+
+// Sign up Page requests
+routes.get('/signup', async (req, res) => {
+    // console.log("signup page rendered!");
+    res.render('signup');
+});
+
 routes.post('/signup_check', jsonparser, async (req, res) => {
     // console.log(req.body.msg);
-    var signup_success = false;
+    let signup_success = false;
 
     for_insert = {
         name: req.body.name,
@@ -98,8 +96,20 @@ routes.post('/signup_check', jsonparser, async (req, res) => {
     try {
         await client.connect();
         if (req.body.email) {
-            var item = await client.db("Auth").collection("Email_Password").insertOne(for_insert);
-            signup_success = item.acknowledged;
+            const item = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).insertOne(for_insert);
+            if (item.acknowledged) {
+                const for_insert2 = {
+                    _id: "Category",
+                    category: ["Income", "Daily", "Purchase", "Recharge/Bill"]
+                };
+                const status = await client.db(process.env.DB_NAME).collection(req.body.email).insertOne(for_insert2);
+                if (status.acknowledged) {
+                    signup_success = item.acknowledged;
+                    req.session.email = item._id;
+                    req.session.name = item.name;
+                    req.session.password = item.password;
+                }
+            }
             // console.log(item);
         }
     } catch (e) {
@@ -119,19 +129,26 @@ routes.post('/signup_check', jsonparser, async (req, res) => {
     res.send(data);
 });
 
+
+// Forgot password requests
+routes.get('/forget_password', async (req, res) => {
+    // console.log("forget_password page rendered!");
+    res.render('forget_password');
+});
+
 routes.post('/forget_password_verification', jsonparser, async (req, res) => {
     // console.log(req.body.msg);
-    var verification_success = false;
-    var otp_success = false;
+    let verification_success = false;
+    let otp_success = false;
     // MongoDB Connect
     try {
         await client.connect();
         if (req.body.email) {
-            const item = await client.db("Auth").collection("Email_Password").findOne({ _id: req.body.email });
+            const item = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).findOne({ _id: req.body.email });
             // console.log("req.body.email", item);
 
             // Generate OTP and send it to the database and user
-            var otp = Math.floor(1000 + Math.random() * 9000);
+            let otp = Math.floor(1000 + Math.random() * 9000);
 
             const filter = { _id: item._id };
             const updateDoc = {
@@ -140,7 +157,7 @@ routes.post('/forget_password_verification', jsonparser, async (req, res) => {
                 }
             };
             const options = { upsert: true };
-            const result = await client.db("Auth").collection("Email_Password").updateOne(filter, updateDoc, options);
+            const result = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).updateOne(filter, updateDoc, options);
 
             // Define the email options
             const mailOptions = {
@@ -157,7 +174,7 @@ routes.post('/forget_password_verification', jsonparser, async (req, res) => {
         } else if (req.body.otp) {
             // Retrieve the OTP that was sent to database and 
             // validate it with the OTP from user
-            const item = await client.db("Auth").collection("Email_Password").findOne({ _id: req.body.email_ });
+            const item = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).findOne({ _id: req.body.email_ });
             // console.log(item);
             if (Number(req.body.otp) == Number(item.otp)) {
                 otp_success = true;
@@ -177,6 +194,11 @@ routes.post('/forget_password_verification', jsonparser, async (req, res) => {
     res.send(data);
 });
 
+routes.get('/reset_password', async (req, res) => {
+    // console.log("reset_password page rendered!");
+    res.render('reset_password');
+});
+
 routes.post("/reset_password", jsonparser, async (req, res) => {
     // console.log(req.body.msg);
     // console.log(req.body.email);
@@ -185,12 +207,12 @@ routes.post("/reset_password", jsonparser, async (req, res) => {
     try {
         await client.connect();
         if (req.body.email) {
-            const item = await client.db("Auth").collection("Email_Password").findOne({ _id: req.body.email });
+            const item = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).findOne({ _id: req.body.email });
             // console.log("req.body.email", item);
-            if(Number(item.otp) == 0){
+            if (Number(item.otp) == 0) {
                 null_otp = true;
             }
-            if(Number(req.body.otp) == Number(item.otp)) {
+            if (Number(req.body.otp) == Number(item.otp)) {
                 const filter = { _id: item._id };
                 const updateDoc = {
                     $set: {
@@ -199,7 +221,7 @@ routes.post("/reset_password", jsonparser, async (req, res) => {
                     }
                 };
                 const options = { upsert: true };
-                const result = await client.db("Auth").collection("Email_Password").updateOne(filter, updateDoc, options);
+                const result = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).updateOne(filter, updateDoc, options);
                 // console.log(result);
                 reset_success = true;
             }
@@ -219,5 +241,346 @@ routes.post("/reset_password", jsonparser, async (req, res) => {
     res.send(data);
 });
 
+
+// Home page requests
+routes.get('/home', async (req, res) => {
+    // console.log("home page rendered!");
+    let request_for_home = false;
+    let Category = null;
+    let Profile = null;
+    let Trans = null;
+    try {
+        // MongoDB Connect
+        await client.connect();
+        if (req.session.email) {
+            item = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).findOne({ _id: req.session.email });
+            if (req.session.password === item.password && req.session.name === item.name) {
+                request_for_home = true;
+                const category_ = await client.db(process.env.DB_NAME).collection(item._id).findOne({ _id: "Category" });
+
+                let trans = await client.db(process.env.DB_NAME).collection(item._id).find({ _id: { $ne: "Category" } }).toArray();
+                // console.log(trans);
+                if (trans.length == 0) {
+                    trans.empty = true;
+                }
+                // console.log(trans);
+                Category = category_.category;
+                Profile = {
+                    email: item._id,
+                    name: item.name
+                };
+                Trans = trans;
+            }
+            console.log(item, "home");
+            // req.session.destroy();
+            // req.session.email = null;
+            // req.session.name = null;
+            // req.session.password = null;
+        }
+    } catch (e) {
+        console.error(e);
+    } finally {
+        await client.close();
+    }
+    console.log(request_for_home);
+    page_selector = {
+        placeholder_home: !request_for_home,
+        home: request_for_home
+    };
+
+    res.render('index', { page_selector: page_selector, profile: Profile, category: Category, trans: Trans });
+});
+
+// routes.post('/home/test', jsonparser, async (req, res) => {
+
+//     req.session.email = req.body.email;
+//     req.session.name = req.body.name;
+//     req.session.password = req.body.password;
+
+//     res.redirect('/home');
+// });
+
+routes.post('/add_transaction', jsonparser, async (req, res) => {
+    // MongoDB Connect
+    let add_success = false;
+    try {
+        await client.connect();
+        if (req.body.email) {
+            const item = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).findOne({ _id: req.body.email });
+            // console.log(item);
+            if (req.body.password === item.password) {
+                for_insertion = {
+                    description: req.body.description,
+                    category: req.body.category,
+                    date: req.body.date,
+                    type: req.body.type,
+                    amount: Number(req.body.amount)
+                };
+                const result = await client.db(process.env.DB_NAME).collection(req.body.email).insertOne(for_insertion);
+                // console.log(result);
+                add_success = result.acknowledged;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    } finally {
+        await client.close();
+    }
+
+    data = {
+        success: add_success,
+    };
+    res.send(data);
+});
+
+
+// Category page requests
+routes.get('/category', async (req, res) => {
+    if (req.session.email) {
+        let Category = null;
+        let Trans = null;
+        try {
+            // MongoDB Connect
+            await client.connect();
+
+            item = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).findOne({ _id: req.session.email });
+            if (req.session.password === item.password) {
+                let trans = await client.db(process.env.DB_NAME).collection(item._id).find({ _id: { $ne: "Category" } }).toArray();
+                if (trans.length == 0) {
+                    trans.empty = true;
+                }
+                Trans = trans;
+                const category_ = await client.db(process.env.DB_NAME).collection(item._id).findOne({ _id: "Category" });
+                if (category_.category.length == 0) {
+                    category_.category.empty = true;
+                }
+                Category = category_.category;
+            }
+            console.log(item, "category");
+            // req.session.destroy();
+            // req.session.email = null;
+            // req.session.name = null;
+            // req.session.password = null;
+
+        } catch (e) {
+            console.error(e);
+        } finally {
+            await client.close();
+        }
+        res.render('category', { category: Category, trans: Trans });
+    } else {
+        Category = [];
+        Category.empty = true;
+        Trans = [];
+        Trans.empty = true;
+        res.render('category', { category: Category, trans: Trans });
+        // res.send("category");
+    }
+});
+
+// routes.post('/category_test', jsonparser, async (req, res) => {
+
+//     req.session.email = req.body.email;
+//     req.session.name = req.body.name;
+//     req.session.password = req.body.password;
+
+//     res.redirect('/category');
+// });
+
+routes.post('/add_category', jsonparser, async (req, res) => {
+    let add_success = false;
+    try {
+        await client.connect();
+        if (req.body.email) {
+            const item = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).findOne({ _id: req.body.email });
+            // console.log(item);
+            if (req.body.password === item.password) {
+                const status = await client.db(process.env.DB_NAME).collection(req.body.email).findOne({ _id: "Category", category: req.body.category });
+                console.log(status);
+                if (status) {
+                    add_success = false;
+                } else {
+                    push_category = {
+                        $push: {
+                            category: req.body.category
+                        }
+                    };
+                    const result = await client.db(process.env.DB_NAME).collection(req.body.email).updateOne({ _id: "Category" }, push_category);
+                    // const result = await client.db(process.env.DB_NAME).collection(req.body.email).insertOne(for_insertion);
+                    console.log(result);
+                    add_success = result.acknowledged;
+                }
+            }
+        }
+        console.log(add_success);
+    } catch (e) {
+        console.error(e);
+    } finally {
+        await client.close();
+    }
+
+    data = {
+        add_success: add_success,
+    };
+    res.send(data);
+});
+
+routes.post('/delete_category', jsonparser, async (req, res) => {
+    let delete_success = false;
+    try {
+        await client.connect();
+        if (req.body.email) {
+            const item = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).findOne({ _id: req.body.email });
+            if (req.body.password === item.password) {
+                pull_category = {
+                    $pull: {
+                        category: req.body.category
+                    }
+                };
+                const result = await client.db(process.env.DB_NAME).collection(req.body.email).updateOne({ _id: "Category" }, pull_category);
+                console.log(result);
+                delete_success = result.acknowledged;
+            }
+        }
+        console.log(delete_success);
+    } catch (e) {
+        console.error(e);
+    } finally {
+        await client.close();
+    }
+
+    data = {
+        delete_success: delete_success,
+    };
+    res.send(data);
+})
+
+routes.post('/categorical_transactions', jsonparser, async (req, res) => {
+    let data = {
+        transactions: null,
+        total: null,
+    };
+    try {
+        await client.connect();
+        if (req.body.email) {
+            const item = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).findOne({ _id: req.body.email });
+            if (req.body.password === item.password) {
+                let trans = await client.db(process.env.DB_NAME).collection(item._id).find({ _id: { $ne: "Category" }, category: req.body.category }).toArray();
+                if (trans.length == 0) {
+                    trans.empty = true;
+                }
+                let total = 0;
+                for (let i = 0; i < trans.length; i++) {
+                    total += trans[i].amount;
+                }
+                data.transactions = trans;
+                data.total = total;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    } finally {
+        await client.close();
+    }
+    res.send(data);
+});
+
+
+// Transaction page requests
+routes.get('/transaction', async (req, res) => {
+    if (req.session.email) {
+        let Category = null;
+        let Trans = null;
+        try {
+            // MongoDB Connect
+            await client.connect();
+
+            item = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).findOne({ _id: req.session.email });
+            if (req.session.password === item.password) {
+                let trans = await client.db(process.env.DB_NAME).collection(item._id).find({ _id: { $ne: "Category" } }).toArray();
+                if (trans.length == 0) {
+                    trans.empty = true;
+                }
+                Trans = trans;
+                const category_ = await client.db(process.env.DB_NAME).collection(item._id).findOne({ _id: "Category" });
+                if (category_.category.length == 0) {
+                    category_.category.empty = true;
+                }
+                Category = category_.category;
+            }
+            console.log(item, "transaction");
+            // req.session.destroy();
+            // req.session.email = null;
+            // req.session.name = null;
+            // req.session.password = null;
+
+        } catch (e) {
+            console.error(e);
+        } finally {
+            await client.close();
+        }
+        res.render('transaction', { category: Category, trans: Trans });
+    } else {
+        Category = [];
+        Category.empty = true;
+        Trans = [];
+        Trans.empty = true;
+        res.render('transaction', { category: Category, trans: Trans });
+        // res.send("category");
+    }
+});
+
+routes.post("/delete_transaction", jsonparser, async (req, res) => {
+    let delete_success = false;
+    try {
+        await client.connect();
+        if (req.body.email) {
+            const item = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).findOne({ _id: req.body.email });
+            if (req.body.password === item.password) {
+                pull_category = {
+                    $pull: {
+                        category: req.body.category
+                    }
+                };
+                const found = await client.db(process.env.DB_NAME).collection(req.body.email).findOne({ _id: req.body.transID });
+                console.log(found);
+                const result = await client.db(process.env.DB_NAME).collection(req.body.email).deleteOne({ _id: new ObjectId(req.body.transID) });
+                console.log(result);
+                if(result.deletedCount > 0) {
+                    delete_success = result.acknowledged;
+                }
+            }
+        }
+        console.log(delete_success);
+    } catch (e) {
+        console.error(e);
+    } finally {
+        await client.close();
+    }
+
+    data = {
+        delete_success: delete_success,
+    };
+    res.send(data);
+});
+
+//Logout
+routes.post('/logout', jsonparser, async (req, res) => {
+    let logout_success = false;
+    try {
+        req.session.destroy();
+        logout_success = true;
+        console.log("logout_success", logout_success);
+    } catch (e) {
+        console.error(e);
+        logout_success = false;
+    } finally {
+        await client.close();
+    }
+    data = {
+        logout_success: logout_success
+    }
+    res.send(data);
+});
 
 module.exports = routes;

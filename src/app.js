@@ -1,14 +1,39 @@
 const express = require("express");
 const hbs = require("hbs");
-const app = express();
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const crypto = require('crypto');
 require("dotenv").config();
 
+// Generate a random session secret
+const generateSessionSecret = () => {
+  return crypto.randomBytes(32).toString('hex');
+};
+const sessionSecret = generateSessionSecret();
+
+hbs.registerHelper('eq', function (a, b, options) {
+  if (a === b) {
+    return true;
+  } else {
+    return false;
+  }
+});
+
+const app = express();
+app.use(session({
+  secret: sessionSecret,
+  resave: false,
+  saveUninitialized: false
+}));
+// console.log('Session secret:', sessionSecret);
 const routes = require("./routes/main");
-const routes2 = require("./routes/home");
+
 
 app.use('/static', express.static('public'));
 app.use("",routes);
-app.use("/home", routes2);
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: false }));
+
 
 // template engine
 app.set('view engine', 'hbs');
