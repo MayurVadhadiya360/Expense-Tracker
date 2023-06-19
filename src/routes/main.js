@@ -105,9 +105,9 @@ routes.post('/signup_check', jsonparser, async (req, res) => {
                 const status = await client.db(process.env.DB_NAME).collection(req.body.email).insertOne(for_insert2);
                 if (status.acknowledged) {
                     signup_success = item.acknowledged;
-                    req.session.email = item._id;
-                    req.session.name = item.name;
-                    req.session.password = item.password;
+                    req.session.email = req.body.email;
+                    req.session.name = req.body.name;
+                    req.session.password = req.body.password;
                 }
             }
             // console.log(item);
@@ -529,7 +529,8 @@ routes.get('/transaction', async (req, res) => {
         // res.send("category");
     }
 });
-
+// There is also add transaction in Transaction Page as well
+// Which uses same "/add_transaction" post method as in home page
 routes.post("/delete_transaction", jsonparser, async (req, res) => {
     let delete_success = false;
     try {
@@ -546,7 +547,7 @@ routes.post("/delete_transaction", jsonparser, async (req, res) => {
                 console.log(found);
                 const result = await client.db(process.env.DB_NAME).collection(req.body.email).deleteOne({ _id: new ObjectId(req.body.transID) });
                 console.log(result);
-                if(result.deletedCount > 0) {
+                if (result.deletedCount > 0) {
                     delete_success = result.acknowledged;
                 }
             }
@@ -563,6 +564,37 @@ routes.post("/delete_transaction", jsonparser, async (req, res) => {
     };
     res.send(data);
 });
+
+// Contact us Page
+routes.get('/contact_us', async (req, res) => {
+    res.render('contact_us');
+});
+
+routes.post("/contact_us", jsonparser, async (req, res) => {
+    let contact_success = false;
+    try {
+        if (req.body.EMAIL) {
+            await client.connect();
+            for_insertion = {
+                F_NAME: req.body.F_NAME,
+                L_NAME: req.body.L_NAME,
+                EMAIL: req.body.EMAIL,
+                MESSAGE: req.body.MESSAGE
+            };
+            const result = await client.db(process.env.DB_NAME).collection(process.env.CONTACT_COLLECTION).insertOne(for_insertion);
+            contact_success = result.acknowledged;
+        }
+    } catch (e) {
+        console.error(e);
+    } finally {
+        await client.close();
+    }
+    data = {
+        contact_success: contact_success
+    }
+    res.send(data);
+});
+
 
 //Logout
 routes.post('/logout', jsonparser, async (req, res) => {
