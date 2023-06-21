@@ -2,6 +2,7 @@ const express = require("express");
 const hbs = require("hbs");
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const crypto = require('crypto');
 require("dotenv").config();
 
@@ -23,7 +24,13 @@ const app = express();
 app.use(session({
   secret: sessionSecret,
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.SESSION_STORE,
+    ttl: 3600,
+    autoRemove: 'interval',
+    autoRemoveInterval: 60,
+  })
 }));
 // console.log('Session secret:', sessionSecret);
 const routes = require("./routes/main");
