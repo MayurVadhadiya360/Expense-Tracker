@@ -249,6 +249,7 @@ routes.get('/home', async (req, res) => {
     let Category = null;
     let Profile = null;
     let Trans = null;
+    
     try {
         // MongoDB Connect
         await client.connect();
@@ -260,14 +261,29 @@ routes.get('/home', async (req, res) => {
 
                 let trans = await client.db(process.env.DB_NAME).collection(item._id).find({ _id: { $ne: "Category" } }).toArray();
                 // console.log(trans);
+                let wallet = 0;
+                let income = 0;
+                let expense = 0;
                 if (trans.length == 0) {
                     trans.empty = true;
+                }else{
+                    for (let i = 0; i < trans.length; i++) {
+                        if(trans[i].type === "Paid"){
+                            expense += trans[i].amount;
+                        }else if(trans[i].type === "Received"){
+                            income += trans[i].amount;
+                        }
+                    }
+                    wallet = income+expense;
                 }
                 // console.log(trans);
                 Category = category_.category;
                 Profile = {
                     email: item._id,
-                    name: item.name
+                    name: item.name,
+                    wallet: wallet,
+                    expense: expense,
+                    income: income
                 };
                 Trans = trans;
             }
@@ -339,6 +355,7 @@ routes.get('/category', async (req, res) => {
     if (req.session.email) {
         let Category = null;
         let Trans = null;
+        let total = 0;
         try {
             // MongoDB Connect
             await client.connect();
@@ -348,6 +365,9 @@ routes.get('/category', async (req, res) => {
                 let trans = await client.db(process.env.DB_NAME).collection(item._id).find({ _id: { $ne: "Category" } }).toArray();
                 if (trans.length == 0) {
                     trans.empty = true;
+                }
+                for (let i = 0; i < trans.length; i++) {
+                    total += trans[i].amount;
                 }
                 Trans = trans;
                 const category_ = await client.db(process.env.DB_NAME).collection(item._id).findOne({ _id: "Category" });
@@ -367,7 +387,7 @@ routes.get('/category', async (req, res) => {
         } finally {
             await client.close();
         }
-        res.render('category', { category: Category, trans: Trans });
+        res.render('category', { category: Category, trans: Trans, Total: total });
     } else {
         Category = [];
         Category.empty = true;
@@ -562,6 +582,94 @@ routes.post("/delete_transaction", jsonparser, async (req, res) => {
     data = {
         delete_success: delete_success,
     };
+    res.send(data);
+});
+
+routes.post('/filter_transaction', jsonparser, async (req, res) => {
+    data = {
+        filterSuccess: false,
+        trans: null,
+    };
+    try{
+        await client.connect();
+        if (req.body.email) {
+            const item = await client.db(process.env.DB_NAME).collection(process.env.AUTH_COLLECTION).findOne({ _id: req.body.email });
+            if (req.body.password === item.password) {
+                let trans = await client.db(process.env.DB_NAME).collection(item._id).find({ _id: { $ne: "Category" } }).toArray();
+                // console.log(trans);
+                let filter = [];
+
+                // Filter 1: Type
+                if (req.body.AmtType === "All") {
+                    filter = trans;
+                }else {
+                    let filter1 = [];
+                    let type = req.body.AmtType;
+                    for (let i = 0; i < trans.length; i++) {
+                        if(type === trans[i].type){
+                            filter1.push(trans[i]);
+                        }
+                    }
+                    filter = filter1;
+                }
+
+                // Filter 2: Category
+                if(req.body.Category === "All"){
+                    // filter = filter;
+                }else{
+                    let filter1 = [];
+                    let cate = req.body.Category;
+                    for (let i = 0; i < filter.length; i++) {
+                        if(cate === filter[i].category){
+                            filter1.push(filter[i]);
+                        }
+                    }
+                    filter = filter1;
+                }
+
+                // Filter 3: Year
+                if(req.body.Year === "All"){
+                    // filter = filter;
+                }else{
+                    let filter1 = [];
+                    let client_y = Number(req.body.Year);
+                    for (let i = 0; i < filter.length; i++) {
+                        let date = new Date(filter[i].date);
+                        let db_y = date.getFullYear();
+                        if(db_y == client_y){
+                            filter1.push(filter[i]);
+                        }
+                    }
+                    filter = filter1;
+                }
+
+                // Filter 4: Month
+                if(req.body.Month === "All"){
+                    // filter = filter;
+                }else{
+                    let filter1 = [];
+                    let client_m = Number(req.body.Month);
+                    for (let i = 0; i < filter.length; i++) {
+                        let date = new Date(filter[i].date);
+                        let db_m = date.getMonth()+1;
+                        if(db_m == client_m){
+                            filter1.push(filter[i]);
+                        }
+                    }
+                    filter = filter1;
+                }
+                if(filter.length>0){
+                    data.filterSuccess = true;
+                    data.trans = filter;
+                }
+            }
+        }
+    }catch (e){
+        console.error(e);
+    }finally{
+        await client.close();
+    }
+
     res.send(data);
 });
 
