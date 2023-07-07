@@ -175,6 +175,7 @@ function Delete_Transaction(transID) {
 function filterTransaction() {
     let year = document.getElementById("yearFilter").value;
     let month = document.getElementById("monthFilter").value;
+    let day = document.getElementById("dayFilter").value;
     let cate = document.getElementById("categoryFilter").value;
     let amt_type = document.getElementById("amtTypeFilter").value;
 
@@ -183,6 +184,7 @@ function filterTransaction() {
         password: localStorage.getItem('expense_password'),
         Year: year,
         Month: month,
+        Day: day,
         Category: cate,
         AmtType: amt_type
     };

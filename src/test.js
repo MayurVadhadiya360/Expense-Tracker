@@ -82,11 +82,17 @@
 // run();
 
 
-//// Second test
+//// Second test: date and time
 
 let str = "2023-07-15";
 let d = new Date(str);
 console.log(d.getFullYear());
 console.log(d.getMonth()+1);
 console.log(d.getDate());
+
+
+//// Third test
+// for (let i = 0; i < 32; i++) {
+//     console.log(`<option value="${i}">${i}</option>`); 
+// }
 

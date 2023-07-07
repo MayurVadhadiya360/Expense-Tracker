@@ -658,6 +658,21 @@ routes.post('/filter_transaction', jsonparser, async (req, res) => {
                     }
                     filter = filter1;
                 }
+                // Filter 5: Day
+                if(req.body.Day === "All"){
+                    // filter = filter;
+                }else{
+                    let filter1 = [];
+                    let client_d = Number(req.body.Day);
+                    for (let i = 0; i < filter.length; i++) {
+                        let date = new Date(filter[i].date);
+                        let db_d = date.getDate();
+                        if(db_d == client_d){
+                            filter1.push(filter[i]);
+                        }
+                    }
+                    filter = filter1;
+                }
                 if(filter.length>0){
                     data.filterSuccess = true;
                     data.trans = filter;
