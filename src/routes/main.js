@@ -164,7 +164,10 @@ routes.post('/forget_password_verification', jsonparser, async (req, res) => {
                 from: process.env.ADMIN_EMAIL,
                 to: item._id,
                 subject: 'noreply@ reset password',
-                text: 'Your OTP to reset password is :' + otp
+                text: 'Your OTP to reset password is :' + otp,
+                html: `<h1>Reset Password for Expense Tracker.</h1><br>
+                <p>Your OTP to reset password is: <b>${otp}</b>.</p><br>
+                <h3>Don't reply to this email.</h3>`
             };
 
             // Send the email using the transporter
