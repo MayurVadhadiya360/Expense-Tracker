@@ -13,7 +13,15 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/billboard.js/dist/billboard.min.css" />
     <link rel="stylesheet" href="static/css/transaction.css">
     <link rel="stylesheet" href="static/css/navbar.css">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-C9YKBQ0B4C"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
 
+        gtag('config', 'G-C9YKBQ0B4C');
+    </script>
 </head>
 
 <body>
@@ -22,7 +30,7 @@
     {{> transaction_partial category=category trans=trans }}
 
     <form id="transaction_page_form"></form>
-    
+
     <script src="static/js/transaction.js"></script>
     <script src="static/js/navbar.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
@@ -32,9 +40,8 @@
         integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"
-        integrity="sha384-fbbOQedDUMZZ5KreZpsbe1LCZPVmfTnH7ois6mU1QK+m14rQ1l2bGBq41eYeM/fS"
-        crossorigin="anonymous">
-    </script>
+        integrity="sha384-fbbOQedDUMZZ5KreZpsbe1LCZPVmfTnH7ois6mU1QK+m14rQ1l2bGBq41eYeM/fS" crossorigin="anonymous">
+        </script>
 </body>
 
 </html>
