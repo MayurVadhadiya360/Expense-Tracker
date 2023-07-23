@@ -288,6 +288,22 @@ routes.get('/home', async (req, res) => {
                     expense: expense,
                     income: income
                 };
+                // Daily transactions
+                let d = new Date();
+                let y = d.getFullYear();
+                let m = d.getMonth()+1;
+                let s = d.getDate();
+                let str = "";
+                str += (y);
+                str += "-";
+                if(m < 10) str += "0";
+                str += (m);
+                str += "-";
+                if(s < 10) str += "0";
+                str += (s);
+                trans = await client.db(process.env.DB_NAME).collection(item._id).find({ _id: { $ne: "Category" }, date: str }).toArray();
+                if (trans.length == 0)
+                    trans.empty = true;
                 Trans = trans;
             }
             console.log(item, "home");

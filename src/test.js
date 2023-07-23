@@ -1,10 +1,10 @@
-// const { MongoClient, ObjectId } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 // // const mongodb = require('mongodb');
 // // const ObjectId = mongodb.ObjectId;
 
 // // const url = "mongodb+srv://mayur123:mayur123@cluster0.wqzsozx.mongodb.net/?retryWrites=true&w=majority";
-// const url = "mongodb://127.0.0.1:27017";
-// const client = new MongoClient(url);
+const url = "mongodb://127.0.0.1:27017";
+const client = new MongoClient(url);
 
 // async function run() {
 //     try {
@@ -84,12 +84,40 @@
 
 //// Second test: date and time
 
-let str = "2023-07-15";
-let d = new Date(str);
-console.log(d.getFullYear());
-console.log(d.getMonth()+1);
-console.log(d.getDate());
+// let str = "2023-07-15";
+// let d = new Date(str);
+// console.log(d.getFullYear());
+// console.log(d.getMonth()+1);
+// console.log(d.getDate());
+let d = new Date();
+console.log(d);
+let y = d.getFullYear();
+let m = d.getMonth()+1;
+let s = d.getDate();
+console.log(y,m,s);
+let str = "";
+str += (y);
+str += "-";
+if(m < 10) str += "0";
+str += (m);
+str += "-";
+if(s < 10) str += "0";
+str += (s);
+console.log(str);
 
+async function run(){
+try{
+    await client.connect();
+    console.log("Auth");
+    let trans = await client.db("Auth").collection("mayur123@mail.com").find({ _id: { $ne: "Category" }, date: str }).toArray();
+    console.log(trans);
+}catch(e) {
+    console.logError(e);
+}finally{
+    await client.close();
+}
+}
+run();
 
 //// Third test
 // for (let i = 0; i < 32; i++) {

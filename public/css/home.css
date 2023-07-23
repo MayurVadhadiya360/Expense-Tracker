@@ -40,6 +40,10 @@ body {
 .for_fixing_recent {
     overflow-x: hidden;
     overflow-y: scroll;
+    border: 2px solid black;
+    border-radius: 15px;
+    border-left: none;
+    border-right: none;
 }
 
 .my_third {
