@@ -41,26 +41,31 @@ Enter OTP in OTP field and Verify. After verification you will be redirected to 
 
 4.	Home Page:
 ![image](https://github.com/MayurVadhadiya360/Expense-Tracker/assets/75627309/6275224c-f9ae-4c3f-97dd-655471c5b22e)
+
 On Home at left hand side, you can see your profile which includes your Name, Personals (i.e., email) and Status (i.e., Wallet, Income, Expense, respectively).
 You can see your recent Transactions in the middle.
 On right hand side is the input fields to add new transaction. After filling input fields with appropriate value, you can click ADD button to add transaction.
 In Navbar you can navigate through various pages (i.e., Home, Category, Transaction, Contact Us) you can logout with Logout button in it.
 
-5.	Category:
+6.	Category:
 ![image](https://github.com/MayurVadhadiya360/Expense-Tracker/assets/75627309/da0bc943-9d98-4e23-9341-b5009fd5d97e)
+
 In category page, you can view all transactions category wise and their total amount as well. You can also add your own category and delete as well.
 
-6.	Transaction:
+8.	Transaction:
 ![image](https://github.com/MayurVadhadiya360/Expense-Tracker/assets/75627309/13219ff2-1674-4052-a03a-9bdee68c8430)
+
 You can also add new transactions at transaction page.
 You can delete wrongly entered transactions by clicking red “Delete” button in transaction field.
 Beside “Add Transaction”, you see “filter” from where you can change to filter option.
 
 ![image](https://github.com/MayurVadhadiya360/Expense-Tracker/assets/75627309/015bf854-050c-4157-96d7-5cd7aef13806)
+
 With filter options, you can view your desired transactions. This helps when finding transaction for delete as well.
 
 7.	Contact Us:
 ![image](https://github.com/MayurVadhadiya360/Expense-Tracker/assets/75627309/6ba66e2b-4407-4beb-9394-c293547ab42d)
+
 With Contact Us page, you can send message or query related to any issues you encountered to the admin.
 
 
