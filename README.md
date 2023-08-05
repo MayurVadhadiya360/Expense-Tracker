@@ -1,14 +1,15 @@
 # Expense-Tracker
 
 Technologies Used:
-    Front-end
-        HTML
-        CSS (Bootstrap)
-        JavaScript
-    Back-end
-        Node.js (Express Framework)
-    Database
-        MongoDB atlas
+1.  Front-end
+    1.  HTML
+    2.  CSS (Bootstrap)
+    3.  JavaScript
+2.	Back-end
+    1.  Node.js (Express Framework)
+3.	Database
+    1.  MongoDB atlas
+
 
 Project Features:
 1.	Login
@@ -19,6 +20,7 @@ Project Features:
 6.	Transaction
 7.	Contact Us
 
+Features:
 
 1.	Login:
 You will land on login page when you first open website. Here you can login into your registered account. You can login with your email and password here. After successful login, your will be redirected to home page of Expense Tracker.
