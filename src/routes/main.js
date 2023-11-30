@@ -26,6 +26,31 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+function getWeekDates(inputDate) {
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dateObj = new Date(inputDate);
+    const dayOfWeekIndex = dateObj.getDay();
+    console.log("Today", dayOfWeekIndex);
+    const startDate = new Date(dateObj);
+    startDate.setDate(dateObj.getDate() - dayOfWeekIndex);
+  
+    const weekDates = [];
+  
+    for (let i = 0; i < 7; i++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + i);
+      weekDates.push(currentDate.toISOString().split('T')[0]);
+    }
+  
+    return weekDates;
+}
+
+function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
 
 // Load login page at start
 routes.get("/", async (req, res) => {
@@ -280,27 +305,48 @@ routes.get('/home', async (req, res) => {
                     wallet = income+expense;
                 }
                 // console.log(trans);
+                dateObj = new Date();
+                str = formatDate(dateObj);
+                dayOfWeekIndex = dateObj.getDay();
+                let weekDays = getWeekDates(str);
+                console.log(weekDays);
+                let weekly_sum = 0;
+                for(let i=0; i<7; i++){
+                    let tempdate = weekDays[i];
+                    trans = await client.db(process.env.DB_NAME).collection(item._id).find({ _id: { $ne: "Category" }, date: tempdate }).toArray();
+                    if (trans.length == 0)
+                        trans.empty = true;
+                    else{
+                        for (let j = 0; j < trans.length; j++) {
+                            if(trans[j].type === "Paid")
+                                weekly_sum += trans[j].amount;
+                        }
+                    }
+                }
                 Category = category_.category;
                 Profile = {
                     email: item._id,
                     name: item.name,
                     wallet: wallet,
                     expense: expense,
-                    income: income
+                    income: income,
+                    weekly_avg: -Math.round(weekly_sum/dayOfWeekIndex)
                 };
                 // Daily transactions
-                let d = new Date();
-                let y = d.getFullYear();
-                let m = d.getMonth()+1;
-                let s = d.getDate();
-                let str = "";
-                str += (y);
-                str += "-";
-                if(m < 10) str += "0";
-                str += (m);
-                str += "-";
-                if(s < 10) str += "0";
-                str += (s);
+                // let d = new Date();
+                // let y = d.getFullYear();
+                // let m = d.getMonth()+1;
+                // let s = d.getDate();
+                // let str = "";
+                // str += (y);
+                // str += "-";
+                // if(m < 10) str += "0";
+                // str += (m);
+                // str += "-";
+                // if(s < 10) str += "0";
+                // str += (s);
+                
+
                 trans = await client.db(process.env.DB_NAME).collection(item._id).find({ _id: { $ne: "Category" }, date: str }).toArray();
                 if (trans.length == 0)
                     trans.empty = true;
